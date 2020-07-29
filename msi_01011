@@ -1,4 +1,5 @@
 //规律信号发生器：01011011101111....
+//testbench
 module top_module ();
 	reg clk;
 	reg rst_n;
@@ -27,18 +28,18 @@ msi_01011		uut_msi_01011(
     
 endmodule
 
-
+//RTL coding
 module msi_01011(
 	input clk,
 	input rst_n,
 	
 	output reg out
     );
-	
+	parameter cnt_width = 10;
 	reg [1:0] ns, cs;
 	parameter [1:0] IDLE = 2'b00, S1 = 2'b01, CHECK = 2'b10;
-	reg [2:0] cnt;
-	reg [2:0] cnt_x;
+	reg [cnt_width - 1:0] cnt;
+	reg [cnt_width - 1:0] cnt_x;
 
 	//用状态机和计数器来实现
 	//首先是第一个always模块
