@@ -1,0 +1,22 @@
+module sync_fifo
+#(
+  parameter ASIZE = 4,
+  parameter DSIZE = 8
+)
+(
+  input clk,
+  input rst_n,
+  input winc,
+  input rinc,
+  input [DSIZE-1:0] wdata,
+  output [DSIZE-1:0] rdata,
+  output reg wfull,
+  output reg rempty
+);
+
+//fifomem
+localparam DEPTH = 1<<ASIZE;
+reg [DSIZE-1:0] mem [DEPTH-1:0];
+always @ (posedge clk) begin
+  if 
+end
