@@ -1,0 +1,93 @@
+module asyn_fifo
+#(
+parameter ASIZE = 4,
+parameter DSIZE = 8
+)
+(
+  input wclk,
+  input rclk,
+  input rst_n,
+  input winc,
+  input rinc,
+  input [DSIZE-1:0] wdata,
+  output [DSIZE-1:0] rdata,
+  output reg wfull,
+  output reg rempty
+)
+
+//fifomem
+localparam DEPTH = 1<<ASIZE;
+reg [DSIZE-1:0] mem [DEPTH-1:0];
+reg [ASIZE-1:0] waddr, raddr;
+
+always @ (posedge wclk or negedge rst_n) begin
+  if (!rst_n) mem[waddr] <= 0;
+  else if (winc && !wfull) mem[waddr] <= wdata;
+  else mem[waddr] <= mem[waddr];
+end
+
+assign rdata = mem[raddr];
+
+//waddr
+reg [ASIZE:0] wbin, wptr;
+reg [ASIZE:0] wbinnext, wgraynext;
+
+assign wbinnext = wbin + (winc & ~wfull);
+assign wgraynext = (wbinnext>>1) ^ wbinnext;
+
+always @ (posedge wclk or negedge rst_n) begin
+  if (!rst_n) {wbin, wptr} <= 0;
+  else {wbin, wptr} <= {wbinnext, wgraynext};
+end
+
+assign waddr = wbin[ASIZE-1:0];
+
+//raddr
+reg [ASIZE:0] rbin, rptr;
+reg [ASIZE:0] rbinnext, rgraynext;
+
+assign rbinnext = rbin + (rinc & ~rempty);
+assign rgraynext = (rbinnext>>1) ^ rbinnext;
+
+always @ (posedge rclk or negedge rst_n) begin
+  if (!rst_n) {rbin, rptr} <= 0;
+  else {rbin, rptr} <= {rbinnext, rgraynext};
+end
+
+assign raddr = rbin[ASIZE-1:0];
+
+//sync_w2r
+reg [ASIZE:0] rq1_wptr;
+reg [ASIZE:0] rq2_wptr;
+
+always @ (posedge rclk or negedge rst_n) begin
+  if (!rst_n) {rq2_wptr,rq1_wptr} <= 0;
+  else {rq2_wptr,rq1_wptr} <= {rq1_wptr,wptr};
+end
+
+//rempty
+wire rempty_val;
+assign rempty_val = (rgraynext == rq2_wptr);
+always @ (posedge rclk or negedge rst_n) begin
+  if (!rst_n) rempty <= 0;
+  else rempty <= rempty_val;
+end
+
+//sync_r2w
+reg [ASIZE:0] wq1_rptr;
+reg [ASIZE:0] wq2_rptr;
+
+always @ (posedge wclk or negedge rst_n) begin
+  if (!rst_n) {wq2_rptr,wq1_rptr} <= 0;
+  else {wq2_rptr,wq1_rptr} <= {wq1_rptr,rptr};
+end
+
+//wfull
+wire wfull_val;
+assign wfull_val = (wgraynext == {~wq2_rptr[ASIZE:ASIZE-1],wq2_rptr[ASIZE-2:0]});
+always @ (posedge wclk or negedge rst_n) begin
+  if (!rst_n) wfull <= 0;
+  else wfull <= wfull_val;
+end
+
+endmodule
