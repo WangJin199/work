@@ -20,9 +20,8 @@ localparam DEPTH = 1<<ASIZE;
 reg [DSIZE-1:0] mem [DEPTH-1:0];
 reg [ASIZE-1:0] waddr, raddr;
 
-always @ (posedge wclk or negedge rst_n) begin
-  if (!rst_n) mem[waddr] <= 0;
-  else if (winc && !wfull) mem[waddr] <= wdata;
+always @ (posedge wclk) begin
+  if (winc && !wfull) mem[waddr] <= wdata;
   else mem[waddr] <= mem[waddr];
 end
 
