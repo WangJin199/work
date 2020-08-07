@@ -49,8 +49,10 @@ reg [ASIZE-1:0] fifo_cnt;
 
 always @ (posedge clk or negedge rst_n) begin
   if (!rst_n) fifo_cnt <= 0;
-  else if (winc && !rinc && !wfull_val) fifo_cnt <= fifo_cnt + 1;
-  else if (!winc && rinc && !rempty_val) fifo_cnt <= fifo_cnt - 1;
+  else if (winc && !rinc && !wfull) fifo_cnt <= fifo_cnt + 1;
+  else if (!winc && rinc && !rempty) fifo_cnt <= fifo_cnt - 1;
+  else if (wfull && rinc && !winc) fifo_cnt <= 1;
+  else if (rempty && winc && !rinc) fifo_cnt <= 1;
   else fifo_cnt <= fifo_cnt;
 end
 
